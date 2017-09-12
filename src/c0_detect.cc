@@ -97,6 +97,10 @@ c0_detect (usrp_source * u, int bi, int chan)
           continue;
         }
       freq = arfcn_to_freq (i, &bi);
+      if (freq_is_cdma(freq)) {
+          fprintf(stderr, "%f is a CDMA channel, skipping\n");
+          continue;
+      }
       if (!u->tune (freq))
 	{
 	  fprintf (stderr, "error: usrp_source::tune\n");
@@ -161,6 +165,10 @@ c0_detect (usrp_source * u, int bi, int chan)
 	}
 
       freq = arfcn_to_freq (i, &bi);
+      if (freq_is_cdma(freq)) {
+          fprintf(stderr, "%f is a CDMA channel, skipping\n");
+          continue;
+      }
       if (!u->tune (freq))
 	{
 	  fprintf (stderr, "error: usrp_source::tune\n");

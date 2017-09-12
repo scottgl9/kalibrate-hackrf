@@ -93,6 +93,103 @@ str_to_bi (char *s)
 }
 
 
+/*
+double cdma_chan_to_freq(int n)
+{
+  if ((1 <= n) && n <= 799) {
+    //return 
+  }
+}
+*/
+
+bool freq_is_cdma(double f)
+{
+  double f2;
+  int n;
+  // channel 1-799 forward channel
+  if ( ((870.0e6 + 0.03e6) <= f) && (f <= (870.0e6 + 23.97e6)) )
+  {
+    for(n=1; n<=799; n++) {
+      f2 = 870.0e6 + 0.03e6 * n;
+      if (f == f2) return true;
+    }
+  }
+  // channel 1-799 reverse channel
+  if ( ((825.0e6 + 0.03e6) <= f) && (f <= (825.0e6 + 23.97e6)) )
+  {
+    for(n=991; n<=1023; n++) {
+      f2 = 825.0e6 + 0.03e6 * n;
+      if (f == f2) return true;
+    }
+  }
+  // channel 991-1023 forward channel
+  if ( ((870.0e6 - 30.69e6) <= f) && (f <= 870.0e6) )
+  {
+    for(n=991; n<=1023; n++) {
+      f2 = 870.0e6 + 0.03e6 * (1023 - n);
+      if (f == f2) return true;
+    }
+  }
+  // channel 991-1023 reverse channel
+  if ( ((825.0e6 - 30.69e6) <= f) && (f <= 825.0e6) )
+  {
+    for(n=991; n<=1023; n++) {
+      f2 = 825.0e6 + 0.03e6 * (1023 - n);
+      if (f == f2) return true;
+    }
+  }
+  // channel 1024-1323 forward channel
+  if ( ((860.0e6 - 30.72e6) <= f) && (f <= 860.0e6) )
+  {
+    for(n=1024; n<=1323; n++) {
+      f2 = 860.0e6 + 0.03e6 * (n - 1024);
+      if (f == f2) return true;
+    }
+  }
+  // channel 1024-1323 reverse channel
+  if ( ((815.0e6 - 30.72e6) <= f) && (f <= 815.0e6) )
+  {
+    for(n=1024; n<=1323; n++) {
+      f2 = 815.0e6 + 0.03e6 * (n - 1024);
+      if (f == f2) return true;
+    }
+  }
+  // channel 1324-1424 forward channel
+  if ( ((866.010e6 - 39.72e6) <= f) && (f <= 866.010e6) )
+  {
+    for(n=1324; n<=1424; n++) {
+      f2 = 866.010e6 + 0.03e6 * (n - 1324);
+      if (f == f2) return true;
+    }
+  }
+  // channel 1324-1424 reverse channel
+  if ( ((821.010e6 - 39.72e6) <= f) && (f <= 821.010e6) )
+  {
+    for(n=1324; n<=1424; n++) {
+      f2 = 821.010e6 + 0.03e6 * (n - 1324);
+      if (f == f2) return true;
+    }
+  }
+  // channel 0-1199 forward channel
+  if ( (1930.0e6 <= f) && (f <= (1930.0e6 + 59.95e6)) )
+  {
+    for(n=0; n<=1199; n++) {
+      f2 = 1930.0e6 + 0.05e6 * n;
+      if (f == f2) return true;
+    }
+  }
+  // channel 0-1199 reverse channel
+  if ( (1850.0e6 <= f) && (f <= (1850.0e6 + 59.95e6)) )
+  {
+    for(n=0; n<=1199; n++) {
+      f2 = 1850.0e6 + 0.05e6 * n;
+      if (f == f2) return true;
+    }
+  }
+
+  return false;
+}
+
 double
 arfcn_to_freq (int n, int *bi)
 {
