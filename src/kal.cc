@@ -99,6 +99,7 @@ usage (char *prog)
   printf ("\t-d\trtl-sdr device index\n");	// TODO: fuck it off.
   printf ("\t-e\tinitial frequency error in ppm\n");
   printf ("\t-E\tmanual frequency offset in hz\n");
+  printf ("\t-p\tOnly get channel power\n");
   printf ("\t-v\tverbose\n");
   printf ("\t-D\tenable debug messages\n");
   printf ("\t-h\thelp\n");
@@ -114,12 +115,14 @@ main (int argc, char **argv)
   int c, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
   int ppm_error = 0, hz_adjust = 0;
   unsigned int subdev = 0, decimation = 29;
-  long int fpga_master_clock_freq = 8000000; // lowest rate supported
+  // for hackrf, if TCXCO is present set clock to 10000000, otherwise 52000000
+  long int fpga_master_clock_freq = 10000000; // lowest rate supported
   int amp_gain = 0, lna_gain = 0, vga_gain = 0;
   double freq = -1.0, fd;
+  bool get_chan_power = false;
   usrp_source *u;
 
-  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:E:d:vDh?")) != EOF)
+  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:E:d:p:vDh?")) != EOF)
     {
       switch (c)
 	{
@@ -197,7 +200,9 @@ main (int argc, char **argv)
 	case 'e':
 	  ppm_error = strtol (optarg, 0, 0);
 	  break;
-
+	case 'p':
+	  get_chan_power = true;
+	  break;
     case 'E':
       hz_adjust = strtol(optarg, 0, 0);
       break;
@@ -315,5 +320,5 @@ main (int argc, char **argv)
   fprintf (stderr, "%s: Scanning for %s base stations.\n",
 	   basename (argv[0]), bi_to_str (bi));
 
-  return c0_detect (u, bi, chan);
+  return c0_detect (u, bi, chan, get_chan_power);
 }

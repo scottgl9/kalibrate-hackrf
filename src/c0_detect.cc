@@ -58,7 +58,7 @@ vectornorm2 (const complex * v, const unsigned int len)
 
 
 int
-c0_detect (usrp_source * u, int bi, int chan)
+c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
 {
 
 #define GSM_RATE (1625000.0 / 6.0)
@@ -97,10 +97,10 @@ c0_detect (usrp_source * u, int bi, int chan)
           continue;
         }
       freq = arfcn_to_freq (i, &bi);
-      if (freq_is_cdma(freq)) {
-          fprintf(stderr, "%f is a CDMA channel, skipping\n");
-          continue;
-      }
+      //if (freq_is_cdma(freq)) {
+      //    fprintf(stderr, "%f is a CDMA channel, skipping\n");
+      //    continue;
+      //}
       if (!u->tune (freq))
 	{
 	  fprintf (stderr, "error: usrp_source::tune\n");
@@ -150,6 +150,16 @@ c0_detect (usrp_source * u, int bi, int chan)
       fprintf (stderr, "channel detect threshold: %lf\n", a);
     }
 
+  if (get_chan_power)
+    {
+        for (i = first_chan (bi); i >= 0; i = next_chan (i, bi))
+        {
+            freq = arfcn_to_freq (i, &bi);
+            if (a < power[i]) printf("%d,%f,%f\n", i, freq, power[i]);
+        }
+        return 0
+    }
+
   // then we look for fcch bursts
   printf ("%s:\n", bi_to_str (bi));
   found_count = 0;
@@ -165,10 +175,10 @@ c0_detect (usrp_source * u, int bi, int chan)
 	}
 
       freq = arfcn_to_freq (i, &bi);
-      if (freq_is_cdma(freq)) {
-          fprintf(stderr, "%f is a CDMA channel, skipping\n");
-          continue;
-      }
+      //if (freq_is_cdma(freq)) {
+      //    fprintf(stderr, "%f is a CDMA channel, skipping\n");
+      //    continue;
+      //}
       if (!u->tune (freq))
 	{
 	  fprintf (stderr, "error: usrp_source::tune\n");

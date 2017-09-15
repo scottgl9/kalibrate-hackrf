@@ -35,9 +35,8 @@ int hackrf_rx_callback (hackrf_transfer * transfer);
 class usrp_source
 {
 public:
-  usrp_source (float sample_rate, long int fpga_master_clock_freq = 52000000);
-    usrp_source (unsigned int decimation, long int fpga_master_clock_freq =
-		 52000000);
+  usrp_source (float sample_rate, long int fpga_master_clock_freq);
+    usrp_source (unsigned int decimation, long int fpga_master_clock_freq);
    ~usrp_source ();
 
   int open (unsigned int subdev);
