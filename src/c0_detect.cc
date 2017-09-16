@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
+#include<bits/stdc++.h>
 
 #include "usrp_source.h"
 #include "circular_buffer.h"
@@ -56,6 +58,11 @@ vectornorm2 (const complex * v, const unsigned int len)
   return e;
 }
 
+bool sortbypower(const std::pair<double,int> &a,
+		              const std::pair<double,int> &b)
+{
+	    return (a.first > b.first);
+}
 
 int
 c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
@@ -140,15 +147,29 @@ c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
     {
       spower[chan_count++] = power[i];
     }
+
   sort (spower, chan_count);
 
   // average the lowest %60
   a = avg (spower, chan_count - 4 * chan_count / 10, 0);
 
-  if (g_verbosity > 0)
-    {
-      fprintf (stderr, "channel detect threshold: %lf\n", a);
-    }
+  //if (g_verbosity > 0)
+  //  {
+  fprintf (stderr, "channel detect threshold: %lf\n", a);
+  //  }
+
+  std::vector<std::pair<double, int>> channel_power;
+
+  for (i = first_chan (bi); i >= 0; i = next_chan (i, bi))
+  {
+      if (power[i]>a) channel_power.push_back(std::pair<double, int>(power[i], i));
+  }
+  sort(channel_power.begin(), channel_power.end(), sortbypower);
+
+/*
+  for(i=0; i<channel_power.size(); i++) {
+          std::cout << channel_power[i].first << " " << channel_power[i].second << std::endl;
+  }
 
   if (get_chan_power)
     {
@@ -157,24 +178,31 @@ c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
             freq = arfcn_to_freq (i, &bi);
             if (a < power[i]) printf("%d,%f,%f\n", i, freq, power[i]);
         }
-        return 0
+        return 0;
     }
-
+*/
   // then we look for fcch bursts
   printf ("%s:\n", bi_to_str (bi));
   found_count = 0;
   notfound_count = 0;
   sum = 0;
   i = first_chan (bi);
-  do
+
+for ( const std::pair<double, int> &channel : channel_power )
+{
+
+      i = channel.second;
+/*
+    do
     {
       if ((chan > -1 && i != chan) || (chan == -1 && power[i] <= a))
 	{
 	  i = next_chan (i, bi);
 	  continue;
 	}
-
+*/
       freq = arfcn_to_freq (i, &bi);
+      //printf("%d %f\n", i, freq);
       //if (freq_is_cdma(freq)) {
       //    fprintf(stderr, "%f is a CDMA channel, skipping\n");
       //    continue;
@@ -205,7 +233,7 @@ c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
 	  display_freq (offset - GSM_RATE / 4);
 	  printf (")\tpower: %10.2f\n", power[i]);
 	  notfound_count = 0;
-	  i = next_chan (i, bi);
+	  //i = next_chan (i, bi);
 	}
       else
 	{
@@ -214,11 +242,11 @@ c0_detect (usrp_source * u, int bi, int chan, bool get_chan_power)
 	  if (notfound_count >= NOTFOUND_MAX)
 	    {
 	      notfound_count = 0;
-	      i = next_chan (i, bi);
+	      //i = next_chan (i, bi);
 	    }
 	}
     }
-  while (i >= 0);
+  //while (i >= 0);
 
   return 0;
 }

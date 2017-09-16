@@ -39,8 +39,8 @@ from optparse import OptionParser
 import grgsm
 import osmosdr
 import pmt
-import time
-
+import grgsm._grgsm_swig
+import sys
 
 class grgsm_livemon_headless(gr.top_block):
 
@@ -71,25 +71,30 @@ class grgsm_livemon_headless(gr.top_block):
         self.rtlsdr_source_0.set_freq_corr(ppm, 0)
         self.rtlsdr_source_0.set_dc_offset_mode(2, 0)
         self.rtlsdr_source_0.set_iq_balance_mode(2, 0)
-        self.rtlsdr_source_0.set_gain_mode(False, 0)
+        self.rtlsdr_source_0.set_gain_mode(True, 0)
         self.rtlsdr_source_0.set_gain(gain, 0)
-        self.rtlsdr_source_0.set_if_gain(20, 0)
-        self.rtlsdr_source_0.set_bb_gain(20, 0)
+        self.rtlsdr_source_0.set_if_gain(30, 0)
+        self.rtlsdr_source_0.set_bb_gain(40, 0)
         self.rtlsdr_source_0.set_antenna("", 0)
         self.rtlsdr_source_0.set_bandwidth(250e3+abs(shiftoff), 0)
-          
+
+        #self.msgq_out = blocks_message_sink_0_msgq_out = gr.msg_queue(2)
+
         self.gsm_sdcch8_demapper_0 = grgsm.gsm_sdcch8_demapper(
             timeslot_nr=1,
         )
+        self.gsm_sdcch8_demapper_1 = grgsm.gsm_sdcch8_demapper(
+            timeslot_nr=1,
+        )
         self.gsm_receiver_0 = grgsm.receiver(4, ([arfcn.downlink2arfcn(fc)]), ([]), False)
-        self.gsm_message_printer_1 = grgsm.message_printer(pmt.intern(""), False,
-            False, False)
+        self.gsm_message_printer_1 = grgsm.message_printer_make(pmt.intern(""), False, False, False)  #grgsm.message_printer(pmt.intern(""), False, False, False)
         self.gsm_input_0 = grgsm.gsm_input(
             ppm=ppm-int(ppm),
             osr=4,
             fc=fc,
             samp_rate_in=samp_rate,
         )
+
         self.gsm_decryption_0 = grgsm.decryption(([]), 1)
         self.gsm_control_channels_decoder_0_0 = grgsm.control_channels_decoder()
         self.gsm_control_channels_decoder_0 = grgsm.control_channels_decoder()
@@ -97,6 +102,7 @@ class grgsm_livemon_headless(gr.top_block):
         self.gsm_bcch_ccch_sdcch4_demapper_0 = grgsm.gsm_bcch_ccch_sdcch4_demapper(
             timeslot_nr=0,
         )
+
         self.blocks_socket_pdu_0_1 = blocks.socket_pdu("UDP_CLIENT", collector, collectorport, 1500, False)
         self.blocks_socket_pdu_0_0 = blocks.socket_pdu("UDP_SERVER", "127.0.0.1", serverport, 10000, False)
         self.blocks_rotator_cc_0 = blocks.rotator_cc(-2*pi*shiftoff/samp_rate)
@@ -107,16 +113,26 @@ class grgsm_livemon_headless(gr.top_block):
         ##################################################
         # the lines below setup the following route:
         # rtlsdr_source_0 -> blocks_head_0 -> blocks_rotator_cc_0 -> gsm_input_0 -> gsm_receiver_0 -> ...
-        self.msg_connect((self.blocks_socket_pdu_0_0, 'pdus'), (self.gsm_message_printer_1, 'msgs'))    
+        # write raw data to stdout so that it can be processed
+        self.blocks_file_sink = blocks.file_descriptor_sink(gr.sizeof_gr_complex*1, sys.stdout.fileno())
+        #self.cch_decoder_decrypted = grgsm.control_channels_decoder()
+        #self.burst_file_sink = grgsm.bur
+        #self.tch_f_pdu_to_tagged_stream = blocks.message_sink(gr.sizeof_gr_complex*1, self.blocks_file_sink, False) #blocks.pdu_to_tagged_stream(blocks.byte_t, "packet_len")
+        #self.blocks_rotator_cc_1 = blocks.rotator_cc(-2 * pi * shiftoff / samp_rate)
+        self.connect((self.blocks_rotator_cc_0, 0), (self.blocks_file_sink, 0))
+        #self.connect((self.gsm_receiver_0, 0), (self.blocks_file_sink, 0))
+        #self.msg_connect((self.gsm_control_channels_decoder_0_0, 'in'), (self.blocks_file_sink, 'out'))
+
+        #self.msg_connect((self.blocks_socket_pdu_0_0, 'pdus'), (self.gsm_message_printer_1, 'msgs'))
         self.msg_connect((self.gsm_bcch_ccch_sdcch4_demapper_0, 'bursts'), (self.gsm_control_channels_decoder_0, 'bursts'))    
         self.msg_connect((self.gsm_clock_offset_control_0, 'ctrl'), (self.gsm_input_0, 'ctrl_in'))    
         self.msg_connect((self.gsm_control_channels_decoder_0, 'msgs'), (self.blocks_socket_pdu_0_1, 'pdus'))    
-        self.msg_connect((self.gsm_control_channels_decoder_0_0, 'msgs'), (self.blocks_socket_pdu_0_1, 'pdus'))    
-        self.msg_connect((self.gsm_decryption_0, 'bursts'), (self.gsm_control_channels_decoder_0_0, 'bursts'))    
+        self.msg_connect((self.gsm_control_channels_decoder_0_0, 'msgs'), (self.blocks_socket_pdu_0_1, 'pdus'))
+        self.msg_connect((self.gsm_decryption_0, 'bursts'), (self.gsm_control_channels_decoder_0_0, 'bursts'))
         self.msg_connect((self.gsm_receiver_0, 'C0'), (self.gsm_bcch_ccch_sdcch4_demapper_0, 'bursts'))    
         self.msg_connect((self.gsm_receiver_0, 'measurements'), (self.gsm_clock_offset_control_0, 'measurements'))    
-        self.msg_connect((self.gsm_receiver_0, 'C0'), (self.gsm_sdcch8_demapper_0, 'bursts'))    
-        self.msg_connect((self.gsm_sdcch8_demapper_0, 'bursts'), (self.gsm_decryption_0, 'bursts'))    
+        self.msg_connect((self.gsm_receiver_0, 'C0'), (self.gsm_sdcch8_demapper_0, 'bursts'))
+        self.msg_connect((self.gsm_sdcch8_demapper_0, 'bursts'), (self.gsm_decryption_0, 'bursts'))
         self.connect((self.blocks_head_0, 0), (self.blocks_rotator_cc_0, 0))    
         self.connect((self.blocks_rotator_cc_0, 0), (self.gsm_input_0, 0))    
         self.connect((self.gsm_input_0, 0), (self.gsm_receiver_0, 0))    

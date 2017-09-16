@@ -120,10 +120,10 @@ class grgsm_livemon(gr.top_block, Qt.QWidget):
         self.rtlsdr_source_0.set_freq_corr(ppm_slider, 0)
         self.rtlsdr_source_0.set_dc_offset_mode(2, 0)
         self.rtlsdr_source_0.set_iq_balance_mode(2, 0)
-        self.rtlsdr_source_0.set_gain_mode(False, 0)
+        self.rtlsdr_source_0.set_gain_mode(True, 0)
         self.rtlsdr_source_0.set_gain(g_slider, 0)
-        self.rtlsdr_source_0.set_if_gain(20, 0)
-        self.rtlsdr_source_0.set_bb_gain(20, 0)
+        self.rtlsdr_source_0.set_if_gain(30, 0)
+        self.rtlsdr_source_0.set_bb_gain(40, 0)
         self.rtlsdr_source_0.set_antenna("", 0)
         self.rtlsdr_source_0.set_bandwidth(250e3+abs(shiftoff), 0)
           
