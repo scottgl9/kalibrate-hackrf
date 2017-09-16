@@ -115,11 +115,16 @@ class grgsm_livemon_headless(gr.top_block):
         # rtlsdr_source_0 -> blocks_head_0 -> blocks_rotator_cc_0 -> gsm_input_0 -> gsm_receiver_0 -> ...
         # write raw data to stdout so that it can be processed
         self.blocks_file_sink = blocks.file_descriptor_sink(gr.sizeof_gr_complex*1, sys.stdout.fileno())
+        self.gsm_burst_file_sink = grgsm.burst_file_sink("/dev/stderr")
+        #self.msg_connect(self.gsm_sdcch8_demapper_0, "bursts", self.gsm_burst_file_sink, "in")
+        self.msg_connect(self.gsm_decryption_0, "bursts", self.gsm_burst_file_sink, "in")
+        self.connect((self.blocks_rotator_cc_0, 0), (self.blocks_file_sink, 0))
+
         #self.cch_decoder_decrypted = grgsm.control_channels_decoder()
         #self.burst_file_sink = grgsm.bur
         #self.tch_f_pdu_to_tagged_stream = blocks.message_sink(gr.sizeof_gr_complex*1, self.blocks_file_sink, False) #blocks.pdu_to_tagged_stream(blocks.byte_t, "packet_len")
         #self.blocks_rotator_cc_1 = blocks.rotator_cc(-2 * pi * shiftoff / samp_rate)
-        self.connect((self.blocks_rotator_cc_0, 0), (self.blocks_file_sink, 0))
+
         #self.connect((self.gsm_receiver_0, 0), (self.blocks_file_sink, 0))
         #self.msg_connect((self.gsm_control_channels_decoder_0_0, 'in'), (self.blocks_file_sink, 'out'))
 
